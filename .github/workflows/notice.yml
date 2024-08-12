@@ -1,16 +1,16 @@
-name: Manual Trigger
+name: Manual Trigger PR Label Notifier
 
 on: [workflow_dispatch]
 
 jobs:
-  node:
+  notify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version-file: ./.nvmrc
-      - name: Install node
-        run: npm install
-      - name: Run node
-        run: ts-node src/index.ts
+      - name: Install dependencies
+        run: npm ci
+      - name: Run notifier script
+        run: npx ts-node src/main.ts
