@@ -3,6 +3,9 @@ import { promisify } from "util";
 
 const execAsync = promisify(exec);
 
+const repository = "taikicoco/pr-label-slack-notifier";
+const labels = ["bug", "documentation", "enhancement"];
+
 interface PullRequest {
   number: number;
   title: string;
@@ -38,9 +41,6 @@ async function sendSlackMessage(message: string) {
 }
 
 async function getPullRequests() {
-  const repository = "taikicoco/pr-label-slack-notifier";
-  const labels = ["bug", "documentation", "enhancement"];
-
   const command = `gh pr list -R ${repository} --json number,title,assignees,labels`;
 
   try {
@@ -61,6 +61,7 @@ async function getPullRequests() {
 
       if (filteredPRs.length > 0) {
         slackMessage += `\n*${label} ラベルのPR:*\n`;
+        slackMessage += "--------------------------------\n";
         filteredPRs.forEach((pr) => {
           const prUrl = `https://github.com/${repository}/pull/${pr.number}`;
           slackMessage += `• <${prUrl}|#${pr.number}: ${pr.title}>\n`;
@@ -79,6 +80,7 @@ async function getPullRequests() {
     });
 
     await sendSlackMessage(slackMessage);
+    console.log("slackMessage:", slackMessage);
   } catch (error) {
     console.error("Error executing command:", error);
   }
