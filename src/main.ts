@@ -11,11 +11,11 @@ interface PullRequest {
 }
 
 async function getPullRequests() {
-  const Repository = "taikicoco/pr-label-slack-notifier";
+  const repository = "taikicoco/pr-label-slack-notifier";
   const labels = ["bug", "documentation", "enhancement"];
 
   const command =
-    "gh pr list -R " + Repository + " --json number,title,assignees,labels";
+    `gh pr list -R ${repository} --json number,title,assignees,labels`;
 
   try {
     const { stdout, stderr } = await execAsync(command);
@@ -35,9 +35,10 @@ async function getPullRequests() {
       if (filteredPRs.length > 0) {
         console.log(`\nPull Requests with label "${label}":`);
         filteredPRs.forEach((pr) => {
+          const prUrl = `https://github.com/${repository}/pull/${pr.number}`;
           console.log(`  PR #${pr.number}: ${pr.title}`);
+          console.log(`    URL: ${prUrl}`);
           console.log(`    Labels: ${pr.labels.map((l) => l.name).join(", ")}`);
-          console.log(`    Title: ${pr.title}`);
           console.log(
             `    Assignees: ${
               pr.assignees.length > 0

@@ -1,6 +1,9 @@
-name: Manual Trigger PR Label Notifier
+name: PR Label Notifier
 
-on: [workflow_dispatch]
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
 
 jobs:
   notify:
