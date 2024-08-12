@@ -10,12 +10,38 @@ interface PullRequest {
   labels: { name: string }[];
 }
 
+async function sendSlackMessage(message: string) {
+  const webhookUrl = process.env.SLACK_WEBHOOK_URL;
+
+  if (!webhookUrl) {
+    console.error("SLACK_WEBHOOK_URL is not set");
+    return;
+  }
+
+  try {
+    const response = await fetch(webhookUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text: message }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    console.log("Slack notification sent successfully");
+  } catch (error) {
+    console.error("Error sending Slack message:", error);
+  }
+}
+
 async function getPullRequests() {
   const repository = "taikicoco/pr-label-slack-notifier";
   const labels = ["bug", "documentation", "enhancement"];
 
-  const command =
-    `gh pr list -R ${repository} --json number,title,assignees,labels`;
+  const command = `gh pr list -R ${repository} --json number,title,assignees,labels`;
 
   try {
     const { stdout, stderr } = await execAsync(command);
@@ -26,6 +52,7 @@ async function getPullRequests() {
     }
 
     const pullRequests: PullRequest[] = JSON.parse(stdout);
+    let slackMessage = "本日のPR状況:\n";
 
     labels.forEach((label) => {
       const filteredPRs = pullRequests.filter((pr) =>
@@ -33,25 +60,25 @@ async function getPullRequests() {
       );
 
       if (filteredPRs.length > 0) {
-        console.log(`\nPull Requests with label "${label}":`);
+        slackMessage += `\n*${label} ラベルのPR:*\n`;
         filteredPRs.forEach((pr) => {
           const prUrl = `https://github.com/${repository}/pull/${pr.number}`;
-          console.log(`  PR #${pr.number}: ${pr.title}`);
-          console.log(`    URL: ${prUrl}`);
-          console.log(`    Labels: ${pr.labels.map((l) => l.name).join(", ")}`);
-          console.log(
-            `    Assignees: ${
-              pr.assignees.length > 0
-                ? pr.assignees.map((a) => a.name).join(", ")
-                : "None"
-            }`
-          );
-          console.log("  ---");
+          slackMessage += `• <${prUrl}|#${pr.number}: ${pr.title}>\n`;
+          slackMessage += `  Labels: ${pr.labels
+            .map((l) => l.name)
+            .join(", ")}\n`;
+          slackMessage += `  Assignees: ${
+            pr.assignees.length > 0
+              ? pr.assignees.map((a) => a.name).join(", ")
+              : "None"
+          }\n\n`;
         });
       } else {
-        console.log(`\nNo Pull Requests found with label "${label}"`);
+        slackMessage += `\n*${label} ラベルのPRはありません*\n`;
       }
     });
+
+    await sendSlackMessage(slackMessage);
   } catch (error) {
     console.error("Error executing command:", error);
   }
