@@ -26,4 +26,5 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        run: npx ts-node notifier/src/index.ts
+        run: npx ts-node src/index.ts
+        
